@@ -24,6 +24,7 @@ class Server extends IRCProtocol implements IServer
     protected $serverHost;
     protected $serverName;
     protected $services = array();
+    protected $users = array();
 
     const RPL_WHOISUSER     = 311;
     const RPL_WHOISSERVER   = 312;
@@ -50,6 +51,11 @@ class Server extends IRCProtocol implements IServer
         return call_user_func_array(array($this, 'putCommand'), $args);
     }
 
+    public function getUser($nick)
+    {
+        return array_key_exists($nick, $this->users) ? $this->users[$nick] : false;
+    }
+
     // provide register and whois for services
     protected function onCommand($prefix, $command, array $params) {
         if ($command == 'PASS') {
@@ -62,6 +68,28 @@ class Server extends IRCProtocol implements IServer
         }
 
         $target = strtolower($params[0]);
+
+        if ($command == 'NICK' && strlen($prefix) > 0) {
+            $user = $this->users[$prefix];
+            unset($this->users[$prefix]);
+            $user->nick = $params[0];
+            $this->users[$params[0]] = $user;
+        }
+
+        if ($command == 'USER') {
+            $this->users[$prefix] = (object)array(
+                'nick'      => $prefix,
+                'ident'     => $params[0],
+                'host'      => $params[1],
+                'server'    => $params[2],
+                'name'      => $params[3],
+                'mask'      => $prefix . '!' . $params[0] . '@' . $params[1],
+            );
+        }
+
+        if ($command == 'QUIT') {
+            unset($this->users[$prefix]);
+        }
 
         if (count($params) > 0 && array_key_exists($target, $this->services)) {
             $service = $this->services[$target];

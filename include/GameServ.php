@@ -173,11 +173,10 @@ class GameServ extends AbstractServ
     public function onCommandNick($prefix, $nick) {
         $this->putCommand('MODE', $nick, '-R');
 
-        $user = $this->server->getUser($nick);
-        $user->modes = str_replace('R', '', $user->modes);
-
         if (strlen($prefix) > 0) {
             unset($this->authTimer[$prefix]);
+            $user = $this->server->getUser($nick);
+            $user->modes = str_replace('R', '', $user->modes);
         }
 
         if ((int)$this->db->query('SELECT COUNT(*) FROM users WHERE nick LIKE ?', $nick)->fetchColumn(0) > 0) {

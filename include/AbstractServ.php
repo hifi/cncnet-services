@@ -21,9 +21,6 @@ abstract class AbstractServ implements IService
 {
     protected $server;
 
-    abstract public function getNick();
-    abstract public function getName();
-
     public function setServer(IServer $server) {
         $this->server = $server;
     }

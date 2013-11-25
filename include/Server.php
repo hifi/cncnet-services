@@ -84,7 +84,26 @@ class Server extends IRCProtocol implements IServer
                 'server'    => $params[2],
                 'name'      => $params[3],
                 'mask'      => $prefix . '!' . $params[0] . '@' . $params[1],
+                'modes'     => '',
             );
+        }
+
+        if ($command == 'MODE' && !in_array($target[0], array('#', '!', '&'))) {
+            $user = $this->users[$target];
+
+            $adding = false;
+            for ($i = 0; $i < strlen($params[1]); $i++) {
+                $c = $params[1][$i];
+                if ($c == '+')
+                    $adding = true;
+                else if ($c == '-')
+                    $adding = false;
+                else {
+                    $user->modes = str_replace($c, '', $user->modes);
+                    if ($adding)
+                        $user->modes .= $c;
+                }
+            }
         }
 
         if ($command == 'QUIT') {

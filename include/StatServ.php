@@ -53,7 +53,6 @@ class StatServ extends AbstractServ
     }
 
     public function on322($prefix, $channel, $users) {
-        echo "channel: $channel, users: $users\n";
         if (preg_match('/^#ra_/', $channel)) {
             $this->data['ra']++;
         } else if (preg_match('/#td_/', $channel)) {

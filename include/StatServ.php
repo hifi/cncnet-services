@@ -67,7 +67,6 @@ class StatServ extends AbstractServ
     }
 
     public function on323() {
-        print_r($this->data);
         $this->db->insert('status', $this->data);
     }
 

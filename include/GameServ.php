@@ -73,6 +73,7 @@ class GameServ extends AbstractServ
             if ($dbuser && $dbuser['password'] == sha1($parts[1] . $dbuser['salt'])) {
                 $this->putNotice($nick, "Authentication successful! You're now logged in as $nick.");
                 $this->putCommand('MODE', $nick, '+R');
+                $user->modes = str_replace('R', '', $user->modes) . 'R';
                 unset($this->authTimer[$nick]);
                 $this->db->update('users', array('mask' => $user->mask), $this->db->quoteInto('nick LIKE ?', $nick));
             } else {
@@ -141,6 +142,7 @@ class GameServ extends AbstractServ
             if ($ret) {
                 $this->putNotice($nick, "Registration successful! You're now logged in as $nick.");
                 $this->putCommand('MODE', $nick, '+R');
+                $user->modes = str_replace('R', '', $user->modes) . 'R';
             } else {
                 $this->putNotice($nick, "Unknown error during registration. Sorry.");
             }
@@ -171,6 +173,9 @@ class GameServ extends AbstractServ
     public function onCommandNick($prefix, $nick) {
         $this->putCommand('MODE', $nick, '-R');
 
+        $user = $this->server->getUser($nick);
+        $user->modes = str_replace('R', '', $user->modes);
+
         if (strlen($prefix) > 0) {
             unset($this->authTimer[$prefix]);
         }
@@ -186,6 +191,7 @@ class GameServ extends AbstractServ
         if ((int)$this->db->query('SELECT COUNT(*) FROM users WHERE mask LIKE ?', $user->mask)->fetchColumn(0) > 0) {
             $this->putNotice($nick, "Authentication successful! You're now logged in as $nick.");
             $this->putCommand('MODE', $nick, '+R');
+            $user->modes = str_replace('R', '', $user->modes) . 'R';
             unset($this->authTimer[$nick]);
         }
     }

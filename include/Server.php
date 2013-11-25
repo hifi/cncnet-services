@@ -89,7 +89,7 @@ class Server extends IRCProtocol implements IServer
         }
 
         if ($command == 'MODE' && !in_array($target[0], array('#', '!', '&'))) {
-            $user = $this->users[$target];
+            $user = $this->users[$params[0]];
 
             $adding = false;
             for ($i = 0; $i < strlen($params[1]); $i++) {

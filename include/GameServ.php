@@ -133,6 +133,7 @@ class GameServ extends AbstractServ
                 'password'  => sha1($parts[1] . $salt),
                 'salt'      => $salt,
                 'email'     => strtolower($parts[2]),
+                'mask'      => array_key_exists($nick, $this->masks) ? $this->masks[$nick] : NULL,
             ));
 
             if ($ret) {

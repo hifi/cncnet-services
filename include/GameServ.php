@@ -145,6 +145,27 @@ class GameServ extends AbstractServ
                 $this->putNotice($nick, "Unknown error during registration. Sorry.");
             }
         }
+
+        if (strtoupper($parts[0]) == 'SETPASS') {
+            $user = $this->server->getUser($nick);
+            if (strpos($user->modes, 'o') === false) {
+                $this->putNotice($nick, "Only moderators can use this command.");
+                return;
+            }
+
+            if (count($parts) < 3) {
+                $this->putNotice($nick, "Usage: SETPASS <nick> <password>");
+                return;
+            }
+
+            $salt = substr(str_shuffle(sha1(microtime())), 0, 32);
+            $this->db->update('users', array(
+                'password'  => sha1($parts[2] . $salt),
+                'salt'      => $salt,
+            ), $this->db->quoteInto('nick = ?', $parts[1]));
+
+            $this->putNotice($nick, "New password set for {$parts[1]}.");
+        }
     }
 
     public function onCommandNick($prefix, $nick) {

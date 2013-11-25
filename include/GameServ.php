@@ -157,7 +157,7 @@ class GameServ extends AbstractServ
         }
 
         if ((int)$this->db->query('SELECT COUNT(*) FROM users WHERE nick LIKE ?', $nick)->fetchColumn(0) > 0) {
-            $this->putNotice($nick, "The nickname '$nick' is registered. Please type /msg " . $this->getNick() . " AUTH <password> in {$this->authTimeout} seconds or you will be disconnected.");
+            $this->putNotice($nick, "The nickname '$nick' is registered. Please type /msg " . $this->getNick() . " AUTH <password> in {$this->authTimeout} seconds or you will be renamed.");
             $this->authTimer[$nick] = time() + $this->authTimeout;
         }
     }
@@ -183,7 +183,8 @@ class GameServ extends AbstractServ
 
         foreach ($this->authTimer as $nick => $time) {
             if ($now > $time) {
-                $this->putCommand('KILL', $nick, 'Authentication timeout.');
+                $this->putNotice($nick, "Authentication timed out, you've been renamed.");
+                $this->putCommand('SVSNICK', $nick, 'UID' . strtoupper(substr(sha1($this->masks[$nick]), 0, 13)));
                 unset($this->authTimer[$nick]);
             }
         }

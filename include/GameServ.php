@@ -32,6 +32,7 @@ class GameServ extends AbstractServ
     public function __construct($options = array())
     {
         $this->db = Zend_Db::factory('Pdo_Sqlite', array('dbname' => $options['db_path'], 'driver_options' => array(PDO::ATTR_TIMEOUT => 60)));
+        $this->authTimeout = array_key_exists('auth_timeout', $options) ? $options['auth_timeout'] : 10;
 
         $this->db->query("
             CREATE TABLE IF NOT EXISTS users(

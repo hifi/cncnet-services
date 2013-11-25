@@ -21,6 +21,7 @@ return array(
     'password'  => 'mypassword',
     'my_host'   => 'services',
     'my_name'   => 'Game Network Services',
+    'debug'     => false,
     'services'  => array(
         'GameServ' => array(
             'db_path' => __dir__ . '/ladderserv.sqlite3',

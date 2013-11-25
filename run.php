@@ -30,7 +30,7 @@ $config = require_once 'config.inc.php';
 
 while (1) {
     $server = new Server($config['host'], $config['port'], $config['password'], $config['my_host'], $config['my_name']);
-    $server->setDebug(true);
+    $server->setDebug(array_key_exists('debug', $config) ? $config['debug'] : false);
     foreach ($config['services'] as $service => $options) {
         require_once $service . '.php';
         $server->registerService(new $service($options));

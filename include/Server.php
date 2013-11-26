@@ -106,10 +106,6 @@ class Server extends IRCProtocol implements IServer
             }
         }
 
-        if ($command == 'QUIT') {
-            unset($this->users[$prefix]);
-        }
-
         if (count($params) > 0 && array_key_exists($target, $this->services)) {
             $service = $this->services[$target];
 
@@ -127,6 +123,10 @@ class Server extends IRCProtocol implements IServer
             foreach ($this->services as $service) {
                 call_user_func_array(array($service, 'onCommand' . ucfirst(strtolower($command))), $params);
             }
+        }
+
+        if ($command == 'QUIT') {
+            unset($this->users[$prefix]);
         }
     }
 

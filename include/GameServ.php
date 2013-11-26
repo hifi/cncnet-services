@@ -118,6 +118,11 @@ class GameServ extends AbstractServ
                 return;
             }
 
+            if (strlen($parts[1]) < 6) {
+                $this->putNotice($nick, "Password must be at least 6 characters long.");
+                return;
+            }
+
             $validator = new Zend_Validate_EmailAddress();
             if (!$validator->isValid($parts[2])) {
                 $this->putNotice($nick, "Invalid email address, try again.");

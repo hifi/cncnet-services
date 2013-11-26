@@ -124,7 +124,7 @@ class GameServ extends AbstractServ
                 return;
             }
 
-            if ((int)$this->db->query('SELECT COUNT(*) FROM users WHERE email LIKE ?', $parts[1])->fetchColumn(0) > 0) {
+            if ((int)$this->db->query('SELECT COUNT(*) FROM users WHERE email LIKE ?', $parts[2])->fetchColumn(0) > 0) {
                 $this->putNotice($nick, "The email '{$parts[1]}' is already registered, please select another one.");
                 return;
             }

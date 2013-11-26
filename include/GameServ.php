@@ -70,7 +70,7 @@ class GameServ extends AbstractServ
             $user = $this->server->getUser($nick);
             $dbuser = $this->db->query($this->db->select()->from('users')->where('nick LIKE ?', $nick))->fetch();
 
-            if ($dbuser && $dbuser['password'] == sha1($parts[1] . $dbuser['salt'])) {
+            if ($dbuser && $dbuser['password'] == hash('sha512', $parts[1] . $dbuser['salt'])) {
                 $this->putNotice($nick, "Authentication successful! You're now logged in as $nick.");
                 $this->putCommand('MODE', $nick, '+R');
                 $user->modes = str_replace('R', '', $user->modes) . 'R';
@@ -92,7 +92,7 @@ class GameServ extends AbstractServ
 
             $dbuser = $this->db->query($this->db->select()->from('users')->where('nick LIKE ?', $parts[1]))->fetch();
 
-            if ($dbuser && $dbuser['password'] == sha1($parts[2] . $dbuser['salt'])) {
+            if ($dbuser && $dbuser['password'] == hash('sha512', $parts[2] . $dbuser['salt'])) {
                 $this->putNotice($nick, "{$parts[1]} has been disconnected.");
                 $this->putCommand('KILL', $parts[1], 'Killed by services.');
             } else {
@@ -129,11 +129,11 @@ class GameServ extends AbstractServ
                 return;
             }
 
-            $salt = substr(str_shuffle(sha1(microtime())), 0, 32);
+            $salt = str_shuffle(hash('sha512', microtime()));
             $user = $this->server->getUser($nick);
             $ret = $this->db->insert('users', array(
                 'nick'      => $nick,
-                'password'  => sha1($parts[1] . $salt),
+                'password'  => hash('sha512', $parts[1] . $salt),
                 'salt'      => $salt,
                 'email'     => strtolower($parts[2]),
                 'mask'      => $user->mask,
@@ -160,9 +160,9 @@ class GameServ extends AbstractServ
                 return;
             }
 
-            $salt = substr(str_shuffle(sha1(microtime())), 0, 32);
+            $salt = str_shuffle(hash('sha512', microtime()));
             $this->db->update('users', array(
-                'password'  => sha1($parts[2] . $salt),
+                'password'  => hash('sha512', $parts[2] . $salt),
                 'salt'      => $salt,
             ), $this->db->quoteInto('nick = ?', $parts[1]));
 

@@ -52,10 +52,11 @@ class StatServ extends AbstractServ
         $this->data['users'] = $users;
     }
 
-    public function on322($prefix, $channel, $users) {
-        if (preg_match('/^#ra_/', $channel)) {
+    public function on322($prefix, $channel, $users, $topic) {
+        $parts = explode(';', $topic);
+        if (count($parts) > 1 && $parts[0] == 1 && $parts[1] == 'ra') {
             $this->data['ra']++;
-        } else if (preg_match('/#td_/', $channel)) {
+        } else if (count($parts) > 1 && $parts[0] == 1 && $parts[1] == 'td') {
             $this->data['td']++;
         } else {
             $this->data['channels']++;

@@ -73,9 +73,9 @@ class GameServ extends AbstractServ
             if ($dbuser && $dbuser['password'] == hash('sha512', $parts[1] . $dbuser['salt'])) {
                 $this->putNotice($nick, "Authentication successful! You're now logged in as $nick.");
                 $this->putCommand('MODE', $nick, '+R');
-                $user->modes = str_replace('R', '', $user->modes) . 'R';
+                $user->updateModes('+R');
                 unset($this->authTimer[$nick]);
-                $this->db->update('users', array('mask' => $user->mask), $this->db->quoteInto('nick LIKE ?', $nick));
+                $this->db->update('users', array('mask' => $user->getMask()), $this->db->quoteInto('nick LIKE ?', $nick));
             } else {
                 $this->putNotice($nick, "Invalid password or unknown account.");
             }
@@ -141,7 +141,7 @@ class GameServ extends AbstractServ
                 'password'  => hash('sha512', $parts[1] . $salt),
                 'salt'      => $salt,
                 'email'     => strtolower($parts[2]),
-                'mask'      => $user->mask,
+                'mask'      => $user->getMask(),
             ));
 
             if ($ret) {
@@ -180,8 +180,7 @@ class GameServ extends AbstractServ
 
         if (strlen($prefix) > 0) {
             unset($this->authTimer[$prefix]);
-            $user = $this->server->getUser($nick);
-            $user->modes = str_replace('R', '', $user->modes);
+            $this->server->getUser($nick)->updateModes('-R');
         }
 
         if ((int)$this->db->query('SELECT COUNT(*) FROM users WHERE nick LIKE ?', $nick)->fetchColumn(0) > 0) {
@@ -192,10 +191,10 @@ class GameServ extends AbstractServ
 
     public function onCommandUser($nick, $ident, $host) {
         $user = $this->server->getUser($nick);
-        if ((int)$this->db->query('SELECT COUNT(*) FROM users WHERE mask LIKE ?', $user->mask)->fetchColumn(0) > 0) {
+        if ((int)$this->db->query('SELECT COUNT(*) FROM users WHERE mask LIKE ?', $user->getMask())->fetchColumn(0) > 0) {
             $this->putNotice($nick, "Authentication successful! You're now logged in as $nick.");
             $this->putCommand('MODE', $nick, '+R');
-            $user->modes = str_replace('R', '', $user->modes) . 'R';
+            $user->updateModes('+R');
             unset($this->authTimer[$nick]);
         }
     }
@@ -212,7 +211,7 @@ class GameServ extends AbstractServ
             if ($now > $time) {
                 $user = $this->server->getUser($nick);
                 $this->putNotice($nick, "Authentication timed out, you've been renamed.");
-                $this->putCommand('SVSNICK', $nick, 'UID' . strtoupper(substr(sha1($user->mask), 0, 13)));
+                $this->putCommand('SVSNICK', $nick, 'UID' . strtoupper(substr(sha1($user->getMask()), 0, 13)));
                 unset($this->authTimer[$nick]);
             }
         }

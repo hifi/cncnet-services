@@ -17,6 +17,8 @@
 
 require_once 'IRCProtocol.php';
 require_once 'IServer.php';
+require_once 'User.php';
+require_once 'Channel.php';
 
 class Server extends IRCProtocol implements IServer
 {
@@ -25,6 +27,7 @@ class Server extends IRCProtocol implements IServer
     protected $serverName;
     protected $services = array();
     protected $users = array();
+    protected $channels = array();
 
     const RPL_WHOISUSER     = 311;
     const RPL_WHOISSERVER   = 312;
@@ -53,7 +56,9 @@ class Server extends IRCProtocol implements IServer
 
     public function getUser($nick)
     {
-        return array_key_exists($nick, $this->users) ? $this->users[$nick] : false;
+        if (!array_key_exists($nick, $this->users))
+            echo "WARNING: Returning invalid user!\n";
+        return array_key_exists($nick, $this->users) ? $this->users[$nick] : new User('!INVALID', 'INVALID', 'INVALID', 'INVALID', 'INVALID');
     }
 
     // provide register and whois for services
@@ -70,40 +75,39 @@ class Server extends IRCProtocol implements IServer
         $target = strtolower($params[0]);
 
         if ($command == 'NICK' && strlen($prefix) > 0) {
-            $user = $this->users[$prefix];
-            unset($this->users[$prefix]);
-            $user->nick = $params[0];
+            $user = &$this->users[$prefix];
+            $user->setNick($params[0]);
             $this->users[$params[0]] = $user;
+            unset($this->users[$prefix]);
         }
 
         if ($command == 'USER') {
-            $this->users[$prefix] = (object)array(
-                'nick'      => $prefix,
-                'ident'     => $params[0],
-                'host'      => $params[1],
-                'server'    => $params[2],
-                'name'      => $params[3],
-                'mask'      => $prefix . '!' . $params[0] . '@' . $params[1],
-                'modes'     => '',
-            );
+            $this->users[$prefix] = new User($prefix, $params[0], $params[1], $params[2], $params[3]);
         }
 
-        if ($command == 'MODE' && !in_array($target[0], array('#', '!', '&'))) {
-            $user = $this->users[$params[0]];
-
-            $adding = false;
-            for ($i = 0; $i < strlen($params[1]); $i++) {
-                $c = $params[1][$i];
-                if ($c == '+')
-                    $adding = true;
-                else if ($c == '-')
-                    $adding = false;
-                else {
-                    $user->modes = str_replace($c, '', $user->modes);
-                    if ($adding)
-                        $user->modes .= $c;
-                }
+        if ($command == 'MODE') {
+            if (in_array($target[0], array('#', '!', '&'))) {
+                $this->channels[$params[0]]->updateModes($params[1]);
+            } else {
+                $this->users[$params[0]]->updateModes($params[1]);
             }
+        }
+
+        if ($command == 'JOIN') {
+            if (!array_key_exists($params[0], $this->channels)) {
+                $this->channels[$params[0]] = new Channel($params[0]);
+            }
+            $this->channels[$params[0]]->addUser($this->users[$prefix]);
+        }
+
+        if ($command == 'TOPIC') {
+            $this->channels[$params[0]]->setTopic($params[1]);
+        }
+
+        if ($command == 'PART') {
+            $channel = $this->channels[$params[1]];
+            $user = $this->getUser($prefix);
+            $channel->removeUser($user);
         }
 
         if (count($params) > 0 && array_key_exists($target, $this->services)) {
@@ -125,7 +129,33 @@ class Server extends IRCProtocol implements IServer
             }
         }
 
+        if ($command == 'PART') {
+            $channel = $this->channels[$params[1]];
+            if ($channel->isEmpty())
+                unset($this->channels[$params[1]]);
+        }
+
+        if ($command == 'KICK') {
+            foreach ($this->channels[$params[1]]['users'] as $k => $v)
+                if ($v->getNick() == $params[2])
+                    unset($this->channels[$params[1]]['users'][$k]);
+
+            if (count($this->channels[$params[1]]['users']) == 0)
+                unset($this->channels[$params[1]]);
+        }
+
         if ($command == 'QUIT') {
+            foreach ($this->channels as $ck => $channel) {
+                foreach ($channel->users as $uk => $user) {
+                    if ($user->getNick() == $params[0])
+                        unset($this->channels[$ck]['users'][$uk]);
+                }
+
+                if (count($channel->users) == 0) {
+                    unset($this->channels[$ck]);
+                }
+            }
+
             unset($this->users[$prefix]);
         }
     }

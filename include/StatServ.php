@@ -38,6 +38,7 @@ class StatServ extends AbstractServ
                 players     INTEGER,
                 td          INTEGER,
                 ra          INTEGER,
+                ts          INTEGER,
                 created DATETIME DEFAULT (datetime())
             );
         ");
@@ -58,6 +59,8 @@ class StatServ extends AbstractServ
             $this->data['ra']++;
         } else if (count($parts) > 1 && $parts[0] == 1 && $parts[1] == 'td') {
             $this->data['td']++;
+        } else if (count($parts) > 1 && $parts[0] == 1 && $parts[1] == 'ts') {
+            $this->data['ts']++;
         } else {
             $this->data['channels']++;
         }
@@ -77,7 +80,15 @@ class StatServ extends AbstractServ
 
     protected function doStat()
     {
-        $this->data = array('server' => $this->server->getHost() . ':' . $this->server->getPort(), 'users' => 0, 'channels' => 0, 'players' => 0, 'td' => 0, 'ra' => 0);
+        $this->data = array(
+            'server'    => $this->server->getHost() . ':' . $this->server->getPort(),
+            'users'     => 0,
+            'channels'  => 0,
+            'players'   => 0,
+            'td'        => 0,
+            'ra'        => 0,
+            'ts'        => 0,
+        );
         $this->putCommand('LUSERS');
         $this->putCommand('LIST');
         $this->setStatTimer();
@@ -88,7 +99,5 @@ class StatServ extends AbstractServ
         if (time() >= $this->nextStat) {
             $this->doStat();
         }
-
-        return parent::think();
     }
 }
